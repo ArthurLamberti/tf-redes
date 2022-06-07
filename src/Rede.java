@@ -40,7 +40,8 @@ public class Rede {
                     String proximaMensagem = listaMensagensEDestinos.get(0);
                     Mensagem mensagem = new Mensagem(proximaMensagem, configuracao);
 
-
+                    String mensagemParaEnviar = remontarPacote(mensagem);
+                    produzirMensagem.enviar(configuracao,mensagemParaEnviar);
                 } else if (mensagemRecebida.startsWith("2222")) {
 
                     Mensagem mensagem = new Mensagem(mensagemRecebida); //TODO FALTA VERIFICAR SE A MENSAGEM EH MINHA
