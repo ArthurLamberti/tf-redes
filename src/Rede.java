@@ -14,12 +14,12 @@ public class Rede {
         this.listaMensagensEDestinos = new ArrayList<>();
         this.produzirMensagem = new ProduzirMensagem();
 
-        listaMensagensEDestinos.add("Mensagem 1;ESPONJA");
-        listaMensagensEDestinos.add("Mensagem 2;ESPONJA");
-        listaMensagensEDestinos.add("Mensagem 3;ESPONJA");
-        listaMensagensEDestinos.add("Mensagem 4;ESPONJA");
-        listaMensagensEDestinos.add("Mensagem 5;ESPONJA");
-        listaMensagensEDestinos.add("Mensagem 6;ESPONJA");
+        listaMensagensEDestinos.add("Mensagem 1;Bob");
+        listaMensagensEDestinos.add("Mensagem 2;Bob");
+        listaMensagensEDestinos.add("Mensagem 3;Bob");
+        listaMensagensEDestinos.add("Mensagem 4;Bob");
+        listaMensagensEDestinos.add("Mensagem 5;Bob");
+        listaMensagensEDestinos.add("Mensagem 6;Bob");
     }
 
     int count = 0;
@@ -28,7 +28,13 @@ public class Rede {
         try {
             DatagramSocket serverSocket = new DatagramSocket(ConfiguracaoLocal.PORTA_LOCAL);
             if (configuracao.getIniciouToken()) {
-                produzirMensagem.enviar(configuracao, configuracao.getApelido() + " - " + count++);
+//                produzirMensagem.enviar(configuracao, configuracao.getApelido() + " - " + count++);
+
+                String proximaMensagem = listaMensagensEDestinos.get(0);
+                Mensagem mensagem = new Mensagem(proximaMensagem, configuracao);
+
+                String mensagemParaEnviar = remontarPacote(mensagem);
+                produzirMensagem.enviar(configuracao,mensagemParaEnviar);
             }
             while (true) {
                 mensagemRecebida = this.consumirMensagem.consumir(serverSocket);
