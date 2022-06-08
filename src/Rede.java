@@ -14,7 +14,8 @@ public class Rede extends Thread {
     private ControleErro controleErro;
     private DatagramSocket serverSocket;
     private boolean deveRodar;
-
+    private Double probabilidadeErro;
+    
     private final String TOKEN = "1111";
     private Boolean retransmitiu;
 
@@ -25,6 +26,7 @@ public class Rede extends Thread {
         this.produzirMensagem = new ProduzirMensagem();
         this.controleErro = new ControleErro();
         this.retransmitiu = false;
+        this.probabilidadeErro = 0D;
 
         listaMensagensEDestinos.add("Mensagem 1;Bob");
         listaMensagensEDestinos.add("Mensagem 2;Bob");
@@ -84,7 +86,7 @@ public class Rede extends Thread {
                     Mensagem mensagem = new Mensagem(mensagemRecebida); //TODO FALTA VERIFICAR SE A MENSAGEM EH MINHA
                     if (mensagem.getApelidoDestino().equals(config.getApelido())) { //Verifica se a mensagem eh pra maquina atual, se for, calcula crc e faz uma logica
                         //TODO calcular o CRC
-                        Boolean crcCalculado = controleErro.calcular(mensagem.getMensagem().getBytes(StandardCharsets.UTF_8), 100.0).equals(mensagem.getCrc());
+                        Boolean crcCalculado = controleErro.calcular(mensagem.getMensagem().getBytes(StandardCharsets.UTF_8), this.probabilidadeErro).equals(mensagem.getCrc());
                         //TODO IMPRIMIR CAMPOS
                         System.out.printf("apelido origem: %s | mensagem original: %s | mensagemRecebida: %s\n", mensagem.getApelidoOrigem(), mensagem.getMensagem(), mensagemRecebida);
 
@@ -142,4 +144,60 @@ public class Rede extends Thread {
 
         return stringBuilder.toString();
     }
+
+
+    /** FUNCOES PARA O MENU*/
+    public void adicionarMensagemNaFila(String mensagem, String destino){
+        if(mensagem.contains(";") || destino.contains(SEPARADOR_MENSAGEM)) {
+            System.out.printf("Mensagem ou destino invalidos, nao utilizar \"%s\"\n", SEPARADOR_MENSAGEM);
+            return;
+        }
+        String mensagemFinal = mensagem + SEPARADOR_MENSAGEM + destino;
+        listaMensagensEDestinos.add(mensagemFinal);
+    }
+
+    public void verListaMensagens(){
+        System.out.println("_____________________________________");
+        System.out.println("LISTA DE MENSAGENS");
+        for(String m: listaMensagensEDestinos) {
+            System.out.printf("Mensagem: %s | Destino: %s\n", m.split(SEPARADOR_MENSAGEM)[0],m.split(SEPARADOR_MENSAGEM)[1]);
+        }
+        System.out.println("_____________________________________");
+    }
+
+    public void alterarProbabilidadeCrc(String s){
+        try {
+            Double valor = Double.valueOf(s);
+            if(valor < 0 || valor > 100) {
+                System.out.println("Somente sera aceito valores entre 0 e 100");
+            }
+        } catch (Exception e){
+            System.out.println("Enviar somente numeros");
+        }
+    }
+
+    public void verProbabilidadeCrc(){
+        System.out.printf("Probabilidade atual: %f\n", this.probabilidadeErro);
+    }
+
+    public void inserirTokenNaRede(){
+        if(this.config.iniciouToken) {
+
+        }
+    }
+
+    /** TODO
+     *
+     MAQUINA QUE GEROU TOKEN
+     - recebeu mensagem
+     - verifica se mensagem eh token
+     - se sim, verifica o tempo MINIMO de token (onde definimos esse tempo?)
+     - se for menor, retirar o tempo da rede
+     - se nao eh token
+     - verifica o tempo MAXIMO de token (onde definimos esse tempo?)
+     - se for maior, inserir o token na rede
+
+     qualquer maquina insere ou retira token
+     */
+
 }
