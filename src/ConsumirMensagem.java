@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 
 public class ConsumirMensagem {
     public String consumir(DatagramSocket serverSocket) {
@@ -18,9 +19,11 @@ public class ConsumirMensagem {
 
             return new String(receivePacket.getData());
 
+        } catch (SocketException ignored) {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 

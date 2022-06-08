@@ -2,6 +2,7 @@ import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Rede extends Thread {
 
@@ -11,7 +12,9 @@ public class Rede extends Thread {
     private ProduzirMensagem produzirMensagem;
     private final String SEPARADOR_MENSAGEM = ";";
     private ControleErro controleErro;
-    
+    private DatagramSocket serverSocket;
+    private boolean deveRodar;
+
     private final String TOKEN = "1111";
     private Boolean retransmitiu;
 
@@ -35,13 +38,22 @@ public class Rede extends Thread {
 
     @Override
     public void run() {
+        this.deveRodar = true;
         entrarNaRede();
+    }
+
+    public void pararDeRodar() {
+        this.deveRodar = false;
+
+        if (Objects.nonNull(this.serverSocket)) {
+            this.serverSocket.close();
+        }
     }
 
     private void entrarNaRede() {
         String mensagemRecebida;
         try {
-            DatagramSocket serverSocket = new DatagramSocket(ConfiguracaoLocal.PORTA_LOCAL);
+            this.serverSocket = new DatagramSocket(ConfiguracaoLocal.PORTA_LOCAL);
             if (config.getIniciouToken()) {
 //                produzirMensagem.enviar(configuracao, configuracao.getApelido() + " - " + count++);
 
@@ -52,8 +64,11 @@ public class Rede extends Thread {
                 produzirMensagem.enviar(config, mensagemParaEnviar);
             }
 
-            while (true) {
+            while (deveRodar) {
                 mensagemRecebida = this.consumirMensagem.consumir(serverSocket);
+                if(Objects.isNull(mensagemRecebida)) {
+                    continue;
+                }
                 System.out.println(mensagemRecebida);
 
                 Thread.sleep(config.getTempoToken());
@@ -85,12 +100,12 @@ public class Rede extends Thread {
                         System.out.printf("Enviou mensagem %s para o vizinho\n", mensagemRemontada);
                     } else if (mensagem.getApelidoOrigem().equals(config.getApelido())) { //Verifica se a maquina atual gerou a mensagem
 
-                        if(mensagem.getControleDeErro().equals(ControleDeErrosEnum.MAQUINA_NAO_EXISTE.getCampo())){ //maquina destino nao se encontra na rede
+                        if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.MAQUINA_NAO_EXISTE.getCampo())) { //maquina destino nao se encontra na rede
                             System.out.println("Maquina destino nao se encontra na rede");
                             listaMensagensEDestinos.remove(0);
                             retransmitiu = false;
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.NAK.getCampo())) { //maquina destino identificou erro
-                            if(retransmitiu) {
+                            if (retransmitiu) {
                                 listaMensagensEDestinos.remove(0);
                                 System.out.println("maquina destino identificou erro novamente no pacote, nao sera retransmitido na proxima vez");
                                 retransmitiu = false;
@@ -103,7 +118,7 @@ public class Rede extends Thread {
                             listaMensagensEDestinos.remove(0);
                             retransmitiu = false;
                         }
-                        produzirMensagem.enviar(configuracao,TOKEN);
+                        produzirMensagem.enviar(config, TOKEN);
                     } else { // se nao for, manda a mensagem pro vizinho
                         produzirMensagem.enviar(config, mensagemRecebida);
                     }
