@@ -15,7 +15,7 @@ public class Mensagem {
         apelidoOrigem = campos[2];
         apelidoDestino = campos[3];
         crc = Long.valueOf(campos[4]);
-        this.mensagem = campos[5];
+        this.mensagem = campos[5].replaceAll("\u0000.*", "");
     }
 
     public Mensagem(String mensagemAEnviar, ConfiguracaoDestino configuracao) {

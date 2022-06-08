@@ -1,4 +1,5 @@
 import java.net.DatagramSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,11 +9,13 @@ public class Rede {
     private List<String> listaMensagensEDestinos;
     private ProduzirMensagem produzirMensagem;
     private final String SEPARADOR_MENSAGEM = ";";
+    private ControleErro controleErro;
 
     public Rede(){
         this.consumirMensagem = new ConsumirMensagem();
         this.listaMensagensEDestinos = new ArrayList<>();
         this.produzirMensagem = new ProduzirMensagem();
+        this.controleErro = new ControleErro();
 
         listaMensagensEDestinos.add("Mensagem 1;Bob");
         listaMensagensEDestinos.add("Mensagem 2;Bob");
@@ -53,7 +56,7 @@ public class Rede {
                     Mensagem mensagem = new Mensagem(mensagemRecebida); //TODO FALTA VERIFICAR SE A MENSAGEM EH MINHA
                     if (mensagem.getApelidoDestino().equals(configuracao.getApelido())) { //Verifica se a mensagem eh pra maquina atual, se for, calcula crc e faz uma logica
                         //TODO calcular o CRC
-                        Boolean crcCalculado = true;
+                        Boolean crcCalculado = controleErro.calcular(mensagem.getMensagem().getBytes(StandardCharsets.UTF_8),100.0).equals(mensagem.getCrc());
                         //TODO IMPRIMIR CAMPOS
                         System.out.printf("apelido origem: %s | mensagem original: %s | mensagemRecebida: %s\n", mensagem.getApelidoOrigem(), mensagem.getMensagem(), mensagemRecebida);
 
