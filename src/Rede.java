@@ -11,6 +11,9 @@ public class Rede extends Thread {
     private ProduzirMensagem produzirMensagem;
     private final String SEPARADOR_MENSAGEM = ";";
     private ControleErro controleErro;
+    
+    private final String TOKEN = "1111";
+    private Boolean retransmitiu;
 
     public Rede(ConfiguracaoDestino config) {
         this.config = config;
@@ -18,6 +21,7 @@ public class Rede extends Thread {
         this.listaMensagensEDestinos = new ArrayList<>();
         this.produzirMensagem = new ProduzirMensagem();
         this.controleErro = new ControleErro();
+        this.retransmitiu = false;
 
         listaMensagensEDestinos.add("Mensagem 1;Bob");
         listaMensagensEDestinos.add("Mensagem 2;Bob");
@@ -81,6 +85,25 @@ public class Rede extends Thread {
                         System.out.printf("Enviou mensagem %s para o vizinho\n", mensagemRemontada);
                     } else if (mensagem.getApelidoOrigem().equals(config.getApelido())) { //Verifica se a maquina atual gerou a mensagem
 
+                        if(mensagem.getControleDeErro().equals(ControleDeErrosEnum.MAQUINA_NAO_EXISTE.getCampo())){ //maquina destino nao se encontra na rede
+                            System.out.println("Maquina destino nao se encontra na rede");
+                            listaMensagensEDestinos.remove(0);
+                            retransmitiu = false;
+                        } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.NAK.getCampo())) { //maquina destino identificou erro
+                            if(retransmitiu) {
+                                listaMensagensEDestinos.remove(0);
+                                System.out.println("maquina destino identificou erro novamente no pacote, nao sera retransmitido na proxima vez");
+                                retransmitiu = false;
+                            } else {
+                                System.out.println("maquina destino identificou erro no pacote, sera retransmitido na proxima vez");
+                                retransmitiu = true;
+                            }
+                        } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.ACK.getCampo())) { //maquina destino recebeu com sucesso
+                            System.out.println("Maquina destino recebeu com sucesso");
+                            listaMensagensEDestinos.remove(0);
+                            retransmitiu = false;
+                        }
+                        produzirMensagem.enviar(configuracao,TOKEN);
                     } else { // se nao for, manda a mensagem pro vizinho
                         produzirMensagem.enviar(config, mensagemRecebida);
                     }
