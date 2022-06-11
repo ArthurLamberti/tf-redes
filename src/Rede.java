@@ -15,6 +15,7 @@ public class Rede extends Thread {
     private DatagramSocket serverSocket;
     private boolean deveRodar;
     private Double probabilidadeErro;
+    private ControleToken controleToken;
     
     private final String TOKEN = "1111";
     private Boolean retransmitiu;
@@ -27,6 +28,9 @@ public class Rede extends Thread {
         this.controleErro = new ControleErro();
         this.retransmitiu = false;
         this.probabilidadeErro = 0D;
+        if(this.config.iniciouToken){
+            this.controleToken = new ControleToken(this);
+        }
 
         listaMensagensEDestinos.add("Mensagem 1;Bob");
         listaMensagensEDestinos.add("Mensagem 2;Bob");
@@ -75,22 +79,24 @@ public class Rede extends Thread {
 
                 Thread.sleep(config.getTempoToken());
                 if (mensagemRecebida.startsWith("1111")) { // Verifica se recebeu token
-                    //TODO tira a mensagem da fila e envia
-                    String proximaMensagem = listaMensagensEDestinos.get(0);
-                    Mensagem mensagem = new Mensagem(proximaMensagem, config);
 
-                    String mensagemParaEnviar = remontarPacote(mensagem);
-                    produzirMensagem.enviar(config, mensagemParaEnviar);
+                    if(this.config.iniciouToken && this.controleToken.validarTempoMinimoToken()){ // se o tempo do token for menor que o tempo minimo, retira da rede
+                        //TODO verificar se tem algo a fazer, creio que nao
+                    } else {
+                        String proximaMensagem = listaMensagensEDestinos.get(0);
+                        Mensagem mensagem = new Mensagem(proximaMensagem, config);
+
+                        String mensagemParaEnviar = remontarPacote(mensagem);
+                        produzirMensagem.enviar(config, mensagemParaEnviar);
+                    }
+
                 } else if (mensagemRecebida.startsWith("2222")) {
 
-                    Mensagem mensagem = new Mensagem(mensagemRecebida); //TODO FALTA VERIFICAR SE A MENSAGEM EH MINHA
+                    Mensagem mensagem = new Mensagem(mensagemRecebida);
                     if (mensagem.getApelidoDestino().equals(config.getApelido())) { //Verifica se a mensagem eh pra maquina atual, se for, calcula crc e faz uma logica
-                        //TODO calcular o CRC
                         Boolean crcCalculado = controleErro.calcular(mensagem.getMensagem().getBytes(StandardCharsets.UTF_8), this.probabilidadeErro).equals(mensagem.getCrc());
-                        //TODO IMPRIMIR CAMPOS
                         System.out.printf("apelido origem: %s | mensagem original: %s | mensagemRecebida: %s\n", mensagem.getApelidoOrigem(), mensagem.getMensagem(), mensagemRecebida);
 
-                        //TODO MUDAR CAMPO PARA ACK OU NAK
                         if (crcCalculado) {
                             mensagem.setControleDeErro(ControleDeErrosEnum.ACK.getCampo());
                         } else {
@@ -182,7 +188,7 @@ public class Rede extends Thread {
 
     public void inserirTokenNaRede(){
         if(this.config.iniciouToken) {
-
+            produzirMensagem.enviar(config, TOKEN);
         }
     }
 
