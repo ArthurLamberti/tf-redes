@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Collections;
 
 import static java.util.Objects.isNull;
 
@@ -12,7 +13,9 @@ public class Main {
             return;
         }
         Rede rede = new Rede(configuracao);
-        Menu menu = new Menu();
+        Menu menu = new Menu(rede);
+
+        Utils.printar(Collections.singletonList("Iniciando maquina na rede"));
 
         rede.start();
         menu.run(rede);
