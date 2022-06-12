@@ -5,10 +5,13 @@ import java.util.Arrays;
 
 public class Menu {
     private enum MenuOpcoes {
+        LISTAR_MENU("0","Listar menu"),
         ADICIONAR_MSG("1", "Adicionar mensagem"),
-        PROBABILIDADE_ERRO("2", "Definir probabilidade de erro"),
-        INSERIR_TOKEN("3", "Inserir token na rede"),
-        REMOVER_TOKEN("4", "Remover token da rede"),
+        LISTAR_MENSAGENS("2", "Listar mensagens da maquina atual"),
+        PROBABILIDADE_ERRO("3", "Definir probabilidade de erro"),
+        VER_PROBABILIDADE_ERRO("4","Ver probabilidade de erro atual"),
+        INSERIR_TOKEN("5", "Inserir token na rede"),
+        REMOVER_TOKEN("6", "Remover token da rede"),
         SAIR("99", "Remover computador da rede");
 
         public String codigo;
@@ -38,7 +41,7 @@ public class Menu {
 
     }
 
-    private void lidarComInput(String input, Rede rede) throws IOException {
+    private void lidarComInput(String input, Rede rede) throws IOException { //TODO ajustar opcoes e chamar funcoes
         if (MenuOpcoes.ADICIONAR_MSG.codigo.equals(input)) {
             System.out.println("Digite a sua mensagem: ");
             String msg = reader.readLine();
@@ -60,7 +63,8 @@ public class Menu {
             rede.pararDeRodar();
             System.out.println("Removendo computador da rede...");
         } else {
-            System.out.println("Operação não identificada !!!");
+            System.out.println("Operação não identificada, selecionar uma opcao validao");
+            exibirMenu();
         }
         System.out.println("\n\n\n");
     }
