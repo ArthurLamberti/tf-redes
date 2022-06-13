@@ -40,8 +40,8 @@ public class Rede extends Thread {
             this.possuiToken = true;
         }
 
-        listaMensagensEDestinos.add("Mensagem 1;Bobe");
-        listaMensagensEDestinos.add("Mensagem 2;Bob");
+        listaMensagensEDestinos.add("Mensagem para o Bob;Bob");
+        listaMensagensEDestinos.add("Mensagem para Fred;Fred");
     }
 
     int count = 0;
@@ -126,6 +126,7 @@ public class Rede extends Thread {
                         Utils.printarLinhaCima();
                         Utils.printarLinha(String.format("Mensagem via broadcast: %s", mensagem.getMensagem()));
                         Utils.printarLinhaBaixo();
+                        produzirMensagem.enviar(config, mensagemRecebida);
 
                     } else if (mensagem.getApelidoOrigem().equals(config.getApelido())) { //Verifica se a maquina atual gerou a mensagem
                         //ORIGEM
@@ -135,27 +136,35 @@ public class Rede extends Thread {
                             } else {
                                 Utils.printarLinha("Maquina destino nao se encontra na rede ou esta desligada");
                             }
+                            try{
                             String msgTemp = listaMensagensEDestinos.remove(0);
                             Utils.printarLinha(String.format("Removida mensagem \"%s\" e enviando token para proxima maquina", msgTemp));
                             retransmitiu = false;
                             Utils.printarLinhaBaixo();
+                            } catch (IndexOutOfBoundsException ignored) {}
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.NAK.getCampo())) { //maquina destino identificou erro
                             if (retransmitiu) {
+                                try{
+
                                 Utils.printarLinha(String.format("Maquina destino identificou erro novamente no pacote, a mensagem \"%s\" sera removida e nao sera retransmitida na proxima vez", mensagem.getMensagem()));
                                 String msgTemp = listaMensagensEDestinos.remove(0);
                                 Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
                                 retransmitiu = false;
                                 Utils.printarLinhaBaixo();
+                                } catch (IndexOutOfBoundsException ignored) {}
                             } else {
                                 Utils.printarLinha(String.format("Maquina destino identificou erro no pacote, a mensagem \"%s\" sera retransmitida na proxima vez. Enviando token para proxima maquina", mensagem.getMensagem()));
                                 retransmitiu = true;
                                 Utils.printarLinhaBaixo();
                             }
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.ACK.getCampo())) { //maquina destino recebeu com sucesso
+                            try {
+
                             Utils.printarLinha(String.format("Maquina %s recebeu com sucesso a mensagem \"%s\"", mensagem.getApelidoDestino(), mensagem.getMensagem()));
                             String msgTemp = listaMensagensEDestinos.remove(0);
                             Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
                             retransmitiu = false;
+                            } catch (IndexOutOfBoundsException ignored) {}
                         }
                         if (possuiToken) {
                             produzirMensagem.enviar(config, TOKEN);
