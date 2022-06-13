@@ -20,7 +20,7 @@ public class ControleToken extends Thread {
         while (true) {
             this.tempoDecorrido = System.currentTimeMillis() - this.tempoInicial;
 
-            System.out.println(this.tempoDecorrido);
+//            System.out.println(this.tempoDecorrido);
 
             if (this.tempoDecorrido / 1000.0 > tempoMaximoTimeout) {
                 System.out.println("Timeout token. Inserindo mais um token na rede");

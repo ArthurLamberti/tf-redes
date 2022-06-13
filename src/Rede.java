@@ -1,6 +1,9 @@
+import jdk.jshell.execution.Util;
+
 import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,12 +40,8 @@ public class Rede extends Thread {
             this.possuiToken = true;
         }
 
-        listaMensagensEDestinos.add("Mensagem 1;Bob");
+        listaMensagensEDestinos.add("Mensagem 1;Bobe");
         listaMensagensEDestinos.add("Mensagem 2;Bob");
-        listaMensagensEDestinos.add("Mensagem 3;Bob");
-        listaMensagensEDestinos.add("Mensagem 4;Bob");
-        listaMensagensEDestinos.add("Mensagem 5;Bob");
-        listaMensagensEDestinos.add("Mensagem 6;Bob");
     }
 
     int count = 0;
@@ -66,8 +65,10 @@ public class Rede extends Thread {
         try {
             this.serverSocket = new DatagramSocket(ConfiguracaoLocal.PORTA_LOCAL);
             if (config.getIniciouToken()) {
+                Utils.printar(Collections.singletonList("Enviando token"));
                 produzirMensagem.enviar(config, TOKEN);
                 controleToken.resetarTempo();
+                controleToken.start();
                 possuiToken = false;
             }
 
@@ -76,7 +77,9 @@ public class Rede extends Thread {
                 if (Objects.isNull(mensagemRecebida)) {
                     continue;
                 }
-                System.out.println(mensagemRecebida);
+                Utils.printarLinhaCima();
+                Utils.printarLinha(mensagemRecebida);
+                Utils.printarLinha("");
                 sleep(config.getTempoToken() * 1000);
                 if (mensagemRecebida.startsWith(TOKEN)) { // Verifica se recebeu token
                     possuiToken = true;
@@ -95,6 +98,8 @@ public class Rede extends Thread {
                             String mensagemParaEnviar = remontarPacote(mensagem);
                             produzirMensagem.enviar(config, mensagemParaEnviar);
                             possuiToken = true;
+                            Utils.printarLinha(String.format("Enviou mensagem \"%s\" para o vizinho", mensagemParaEnviar));
+                            Utils.printarLinhaBaixo();
                         }
                     }
 
@@ -104,7 +109,7 @@ public class Rede extends Thread {
                     if (mensagem.getApelidoDestino().equals(config.getApelido())) { //Verifica se a mensagem eh pra maquina atual, se for, calcula crc e faz uma logica
                         //DESTINO
                         boolean crcCalculado = controleErro.calcular(mensagem.getMensagem().getBytes(StandardCharsets.UTF_8), this.probabilidadeErro).equals(mensagem.getCrc());
-                        System.out.printf("apelido origem: %s | mensagem original: %s | pacoteRecebido: %s\n", mensagem.getApelidoOrigem(), mensagem.getMensagem(), mensagemRecebida);
+                        Utils.printarLinha(String.format("Apelido origem: %s | mensagem original: %s | pacoteRecebido: %s", mensagem.getApelidoOrigem(), mensagem.getMensagem(), mensagemRecebida));
 
                         if (crcCalculado) {
                             mensagem.setControleDeErro(ControleDeErrosEnum.ACK.getCampo());
@@ -114,42 +119,49 @@ public class Rede extends Thread {
 
                         String mensagemRemontada = remontarPacote(mensagem);
                         produzirMensagem.enviar(config, mensagemRemontada);
-                        System.out.printf("Enviou mensagem \"%s\" para o vizinho\n", mensagemRemontada);
+                        Utils.printarLinha(String.format("Enviou mensagem \"%s\" para o vizinho", mensagemRemontada));
+                        Utils.printarLinhaBaixo();
                     } else if (mensagem.getApelidoDestino().equalsIgnoreCase(TRANSMISSAO_BROADCAST) && !mensagem.getApelidoOrigem().equals(config.getApelido())) {
                         //SE FOR MENSAGEM BROADCAST E NAO FOI A MAQUINA ATUAL QUE MANDOU
-                        System.out.printf("Mensagem via broadcast: %s", mensagem.getMensagem());
+                        Utils.printarLinhaCima();
+                        Utils.printarLinha(String.format("Mensagem via broadcast: %s", mensagem.getMensagem()));
+                        Utils.printarLinhaBaixo();
 
                     } else if (mensagem.getApelidoOrigem().equals(config.getApelido())) { //Verifica se a maquina atual gerou a mensagem
                         //ORIGEM
                         if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.MAQUINA_NAO_EXISTE.getCampo())) { //maquina destino nao se encontra na rede
                             if (mensagem.getApelidoDestino().equalsIgnoreCase(TRANSMISSAO_BROADCAST)) {
-                                System.out.println("Mensagem enviada para todas maquinas conectadas");
+                                Utils.printarLinha("Mensagem enviada para todas maquinas conectadas");
                             } else {
-                                System.out.println("Maquina destino nao se encontra na rede ou esta desligada");
+                                Utils.printarLinha("Maquina destino nao se encontra na rede ou esta desligada");
                             }
                             String msgTemp = listaMensagensEDestinos.remove(0);
-                            System.out.printf("Removida mensagem \"%s\" e enviando token para proxima maquina\n", msgTemp);
+                            Utils.printarLinha(String.format("Removida mensagem \"%s\" e enviando token para proxima maquina", msgTemp));
                             retransmitiu = false;
+                            Utils.printarLinhaBaixo();
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.NAK.getCampo())) { //maquina destino identificou erro
                             if (retransmitiu) {
-                                System.out.printf("maquina destino identificou erro novamente no pacote, a mensagem \"%s\" sera removida e nao sera retransmitida na proxima vez\n", mensagem.getMensagem());
+                                Utils.printarLinha(String.format("Maquina destino identificou erro novamente no pacote, a mensagem \"%s\" sera removida e nao sera retransmitida na proxima vez", mensagem.getMensagem()));
                                 String msgTemp = listaMensagensEDestinos.remove(0);
-                                System.out.printf("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina\n", msgTemp);
+                                Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
                                 retransmitiu = false;
+                                Utils.printarLinhaBaixo();
                             } else {
-                                System.out.printf("maquina destino identificou erro no pacote, a mensagem \"%s\" sera retransmitida na proxima vez. Enviando token para proxima maquina\n", mensagem.getMensagem());
+                                Utils.printarLinha(String.format("Maquina destino identificou erro no pacote, a mensagem \"%s\" sera retransmitida na proxima vez. Enviando token para proxima maquina", mensagem.getMensagem()));
                                 retransmitiu = true;
+                                Utils.printarLinhaBaixo();
                             }
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.ACK.getCampo())) { //maquina destino recebeu com sucesso
-                            System.out.printf("Maquina %s recebeu com sucesso a mensagem \"%s\"\n", mensagem.getApelidoDestino(), mensagem.getMensagem());
+                            Utils.printarLinha(String.format("Maquina %s recebeu com sucesso a mensagem \"%s\"", mensagem.getApelidoDestino(), mensagem.getMensagem()));
                             String msgTemp = listaMensagensEDestinos.remove(0);
-                            System.out.printf("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina\n", msgTemp);
+                            Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
                             retransmitiu = false;
                         }
                         if (possuiToken) {
                             produzirMensagem.enviar(config, TOKEN);
                         }
                     } else { // se nao for, manda a mensagem pro vizinho
+                        Utils.printarLinha(String.format("Apenas passou a mensagem \"%s\" para o vizinho", mensagem.getMensagem()));
                         produzirMensagem.enviar(config, mensagemRecebida);
                     }
                 }
@@ -179,11 +191,11 @@ public class Rede extends Thread {
      */
     public void adicionarMensagemNaFila(String mensagem, String destino) {
         if (listaMensagensEDestinos.size() == 10) {
-            System.out.println("Numero maximo de mensagens na fila");
+            Utils.printarLinha("Numero maximo de mensagens na fila");
             return;
         }
         if (mensagem.contains(";") || destino.contains(SEPARADOR_MENSAGEM)) {
-            System.out.printf("Mensagem ou destino invalidos, nao utilizar \"%s\"\n", SEPARADOR_MENSAGEM);
+            Utils.printarLinha(String.format("Mensagem ou destino invalidos, nao utilizar \"%s\"\n", SEPARADOR_MENSAGEM));
             return;
         }
         String mensagemFinal = mensagem + SEPARADOR_MENSAGEM + destino;
@@ -191,27 +203,29 @@ public class Rede extends Thread {
     }
 
     public void verListaMensagens() {
-        System.out.println("_____________________________________");
-        System.out.println("LISTA DE MENSAGENS");
+        ArrayList<String> linhas = new ArrayList<>();
+        linhas.add("LISTA DE MENSAGENS");
         for (String m : listaMensagensEDestinos) {
-            System.out.printf("Mensagem: %s | Destino: %s\n", m.split(SEPARADOR_MENSAGEM)[0], m.split(SEPARADOR_MENSAGEM)[1]);
+            linhas.add(String.format("Mensagem: %s | Destino: %s", m.split(SEPARADOR_MENSAGEM)[0], m.split(SEPARADOR_MENSAGEM)[1]));
         }
-        System.out.println("_____________________________________");
+        Utils.printar(linhas);
     }
 
     public void alterarProbabilidadeCrc(String s) {
         try {
-            Double valor = Double.valueOf(s);
+            double valor = Double.parseDouble(s);
             if (valor < 0 || valor > 100) {
-                System.out.println("Somente sera aceito valores entre 0 e 100");
+                Utils.printarLinha("Somente sera aceito valores entre 0 e 100");
+            } else {
+                this.probabilidadeErro = valor;
             }
         } catch (Exception e) {
-            System.out.println("Enviar somente numeros");
+            Utils.printarLinha("Enviar somente numeros");
         }
     }
 
     public void verProbabilidadeCrc() {
-        System.out.printf("Probabilidade atual: %f\n", this.probabilidadeErro);
+        Utils.printarLinha(String.format("Probabilidade atual: %f", this.probabilidadeErro));
     }
 
     public void inserirTokenNaRede() {
@@ -223,10 +237,10 @@ public class Rede extends Thread {
 
     public void removerToken() {
         if (possuiToken) {
-            System.out.println("Removendo token da rede");
+            Utils.printarLinha("Removendo token da rede");
             possuiToken = false;
         } else {
-            System.out.println("Maquina atual nao possui token, portanto nao sera removido");
+            Utils.printarLinha("Maquina atual nao possui token, portanto nao sera removido");
         }
     }
 }

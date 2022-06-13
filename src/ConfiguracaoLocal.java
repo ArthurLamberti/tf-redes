@@ -6,5 +6,4 @@ public class ConfiguracaoLocal {
 
     public final static Double TEMPO_TIMEOUT_TOKEN = 3D;
     public final static Double TEMPO_MINIMO_TOKEN = 1D;
-
 }

@@ -48,34 +48,40 @@ public class Menu {
         if (MenuOpcoes.LISTAR_MENU.codigo.equals(input)) { // 0
             exibirMenu();
         } else if (MenuOpcoes.ADICIONAR_MSG.codigo.equals(input)) { // 1
-            System.out.println("Digite a sua mensagem: ");
+            Utils.printarLinha("Digite a sua mensagem: ");
             String msg = reader.readLine();
-            System.out.println("Digite o destino: ");
+            Utils.printarLinha("Digite o destino: ");
             String dest = reader.readLine();
 
             this.rede.adicionarMensagemNaFila(msg, dest);
-            System.out.println("Mensagem adicionada");
+            Utils.printarLinha("Mensagem adicionada");
+            Utils.printarLinhaBaixo();
         } else if (MenuOpcoes.LISTAR_MENSAGENS.codigo.equals(input)) { // 2
             this.rede.verListaMensagens();
         } else if (MenuOpcoes.PROBABILIDADE_ERRO.codigo.equals(input)) { // 3
-            System.out.println("Digite a probabilidade de erro desejada: ");
+            Utils.printarLinha("Digite a probabilidade de erro desejada: ");
             String probabilidadeErro = reader.readLine();
             this.rede.alterarProbabilidadeCrc(probabilidadeErro);
-            System.out.println("Probabilidade definida: " + probabilidadeErro);
+            Utils.printarLinha("Probabilidade definida: " + probabilidadeErro);
+            Utils.printarLinhaBaixo();
         } else if (MenuOpcoes.VER_PROBABILIDADE_ERRO.codigo.equals(input)) { // 4
             this.rede.verProbabilidadeCrc();
         } else if (MenuOpcoes.INSERIR_TOKEN.codigo.equals(input)) { // 5
             this.rede.inserirTokenNaRede();
-            System.out.println("Token inserido");
+            Utils.printarLinha("Token inserido");
+            Utils.printarLinhaBaixo();
         } else if (MenuOpcoes.REMOVER_TOKEN.codigo.equals(input)) { // 6
             this.rede.removerToken();
-            System.out.println("Token removido");
+            Utils.printarLinha("Token removido");
+            Utils.printarLinhaBaixo();
         } else if (MenuOpcoes.SAIR.codigo.equals(input)) { // 99
             this.deveRodarMenu = false;
             rede.pararDeRodar();
-            System.out.println("Removendo computador da rede...");
+            Utils.printarLinha("Removendo computador da rede...");
+            Utils.printarLinhaBaixo();
         } else {
-            System.out.println("Operação não identificada, selecionar uma opcao validao");
+            Utils.printarLinha("Operação não identificada, selecionar uma opcao validao");
+            Utils.printarLinhaBaixo();
             exibirMenu();
         }
         System.out.println("\n\n");
