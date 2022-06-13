@@ -87,10 +87,12 @@ public class Rede extends Thread {
                     if (this.config.iniciouToken && this.controleToken.validarTempoMinimoToken()) { // se o tempo do token for menor que o tempo minimo, retira da rede
                         // se entrar aqui eh pq o tempo do token foi menor que o tempo minimo, portanto, saiu da rede
                         possuiToken = false;
+                        controleToken.resetarTempo();
                     } else {
                         if (this.listaMensagensEDestinos.isEmpty()) { // se a fila de mensagens estiver vazia, apenas passa o token para a proxima maquina
                             produzirMensagem.enviar(config, TOKEN);
                             possuiToken = false;
+                            controleToken.resetarTempo();
                         } else { //se tiver dados, envia a mensagem pra proxima maquina
                             String proximaMensagem = listaMensagensEDestinos.get(0);
                             Mensagem mensagem = new Mensagem(proximaMensagem, config);
@@ -146,11 +148,11 @@ public class Rede extends Thread {
                             if (retransmitiu) {
                                 try{
 
-                                Utils.printarLinha(String.format("Maquina destino identificou erro novamente no pacote, a mensagem \"%s\" sera removida e nao sera retransmitida na proxima vez", mensagem.getMensagem()));
-                                String msgTemp = listaMensagensEDestinos.remove(0);
-                                Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
-                                retransmitiu = false;
-                                Utils.printarLinhaBaixo();
+                                    Utils.printarLinha(String.format("Maquina destino identificou erro novamente no pacote, a mensagem \"%s\" sera removida e nao sera retransmitida na proxima vez", mensagem.getMensagem()));
+                                    String msgTemp = listaMensagensEDestinos.remove(0);
+                                    Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
+                                    retransmitiu = false;
+                                    Utils.printarLinhaBaixo();
                                 } catch (IndexOutOfBoundsException ignored) {}
                             } else {
                                 Utils.printarLinha(String.format("Maquina destino identificou erro no pacote, a mensagem \"%s\" sera retransmitida na proxima vez. Enviando token para proxima maquina", mensagem.getMensagem()));
@@ -160,14 +162,15 @@ public class Rede extends Thread {
                         } else if (mensagem.getControleDeErro().equals(ControleDeErrosEnum.ACK.getCampo())) { //maquina destino recebeu com sucesso
                             try {
 
-                            Utils.printarLinha(String.format("Maquina %s recebeu com sucesso a mensagem \"%s\"", mensagem.getApelidoDestino(), mensagem.getMensagem()));
-                            String msgTemp = listaMensagensEDestinos.remove(0);
-                            Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
-                            retransmitiu = false;
+                                Utils.printarLinha(String.format("Maquina %s recebeu com sucesso a mensagem \"%s\"", mensagem.getApelidoDestino(), mensagem.getMensagem()));
+                                String msgTemp = listaMensagensEDestinos.remove(0);
+                                Utils.printarLinha(String.format("Mensagem \"%s\" removida da fila. Token sera enviado para a proxima maquina", msgTemp));
+                                retransmitiu = false;
                             } catch (IndexOutOfBoundsException ignored) {}
                         }
                         if (possuiToken) {
                             produzirMensagem.enviar(config, TOKEN);
+                            controleToken.resetarTempo();
                         }
                     } else { // se nao for, manda a mensagem pro vizinho
                         Utils.printarLinha(String.format("Apenas passou a mensagem \"%s\" para o vizinho", mensagem.getMensagem()));
