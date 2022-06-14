@@ -87,12 +87,16 @@ public class Rede extends Thread {
                     if (this.config.iniciouToken && this.controleToken.validarTempoMinimoToken()) { // se o tempo do token for menor que o tempo minimo, retira da rede
                         // se entrar aqui eh pq o tempo do token foi menor que o tempo minimo, portanto, saiu da rede
                         possuiToken = false;
-                        controleToken.resetarTempo();
+                        if (this.config.iniciouToken) { //se for a maquina que iniciou token, reseta o tempo de controle
+                            controleToken.resetarTempo();
+                        }
                     } else {
                         if (this.listaMensagensEDestinos.isEmpty()) { // se a fila de mensagens estiver vazia, apenas passa o token para a proxima maquina
                             produzirMensagem.enviar(config, TOKEN);
                             possuiToken = false;
-                            controleToken.resetarTempo();
+                            if (this.config.iniciouToken) { //se for a maquina que iniciou token, reseta o tempo de controle
+                                controleToken.resetarTempo();
+                            }
                         } else { //se tiver dados, envia a mensagem pra proxima maquina
                             String proximaMensagem = listaMensagensEDestinos.get(0);
                             Mensagem mensagem = new Mensagem(proximaMensagem, config);
@@ -170,7 +174,10 @@ public class Rede extends Thread {
                         }
                         if (possuiToken) {
                             produzirMensagem.enviar(config, TOKEN);
-                            controleToken.resetarTempo();
+                            if (this.config.iniciouToken) { //se for a maquina que iniciou token, reseta o tempo de controle
+                                controleToken.resetarTempo();
+                            }
+                            possuiToken = false;
                         }
                     } else { // se nao for, manda a mensagem pro vizinho
                         Utils.printarLinha(String.format("Apenas passou a mensagem \"%s\" para o vizinho", mensagem.getMensagem()));
